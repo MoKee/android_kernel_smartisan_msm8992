@@ -12,6 +12,7 @@
 #define _LINUX_CPUFREQ_H
 
 #include <linux/cpumask.h>
+#include <linux/cputime.h>
 #include <linux/completion.h>
 #include <linux/kobject.h>
 #include <linux/notifier.h>
@@ -500,5 +501,6 @@ int  proc_concurrent_active_time_show(struct seq_file *m,
 	struct pid_namespace *ns, struct pid *pid, struct task_struct *p);
 int  proc_concurrent_policy_time_show(struct seq_file *m,
 	struct pid_namespace *ns, struct pid *pid, struct task_struct *p);
+int single_uid_time_in_state_open(struct inode *inode, struct file *file);
 
 #endif /* _LINUX_CPUFREQ_H */
