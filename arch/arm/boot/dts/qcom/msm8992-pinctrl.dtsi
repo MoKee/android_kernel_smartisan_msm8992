@@ -94,6 +94,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		pmx_hdmi_cec: pmx_hdmi_cec {
 			qcom,pin-func = <1>;
 			label = "hdmi-cec-pins";
@@ -132,6 +133,8 @@
 				bias-pull-down;
 			};
 		};
+#endif
+
 		/* SDC pin type */
 		sdc: sdc {
 			/* 0-3 for sdc1 4-6 for sdc2 */
@@ -323,6 +326,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		tpiu_seta_4 {
 			qcom,pins = <&gp 54>;
 			qcom,num-grp-pins = <1>;
@@ -333,6 +337,7 @@
 				bias-disable;
 			};
 		};
+#endif
 
 		tpiu_seta_5 {
 			qcom,pins = <&gp 63>;
@@ -720,6 +725,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		spi0_active {
 			/* MOSI, MISO, CLK */
 			qcom,pins = <&gp 0>, <&gp 1>, <&gp 3>;
@@ -769,6 +775,7 @@
 				bias-disable = <0>;
 			};
 		};
+#endif
 
 		pcie0_clkreq {
 			qcom,pins = <&gp 36>;
@@ -800,7 +807,11 @@
 			/* default state */
 			pcie0_wake_default: pcie0_wake_default {
 				drive-strength = <2>;
+#ifdef CONFIG_VENDOR_SMARTISAN
+				bias-pull-up;
+#else
 				bias-pull-down;
+#endif
 			};
 
 			pcie0_wake_sleep: pcie0_wake_sleep {
@@ -809,6 +820,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		cnss_pins {
 			qcom,pins = <&gp 112>, <&gp 54>, <&gp 53>, <&gp 113>;
 			qcom,num-grp-pins = <4>;
@@ -819,6 +831,7 @@
 				bias-pull-down;
 			};
 		};
+#endif
 
 		pmx_i2c_2 {
 			qcom,pins = <&gp 6>, <&gp 7>; /* SDA, SCL */
@@ -854,6 +867,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		pmx_fm_int_active {
 			qcom,pins = <&gp 9>;
 			qcom,pin-func = <0>;
@@ -925,6 +939,7 @@
 				bias-pull-down;
 			};
 		};
+#endif
 
 		pmx_ts {
 			qcom,pins = <&gp 60>, <&gp 61>;
@@ -1228,6 +1243,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		tsif0_signals {
 			qcom,pins = <&gp 89>,	/* TSIF0 CLK */
 				<&gp 90>,	/* TSIF0 Enable */
@@ -1277,5 +1293,6 @@
 				bias-pull-down;		/* pull down */
 			};
 		};
+#endif
 	};
 };

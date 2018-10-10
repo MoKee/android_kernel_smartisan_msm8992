@@ -11,11 +11,15 @@
  */
 
 #include "msm8992-pinctrl.dtsi"
+#ifndef CONFIG_VENDOR_SMARTISAN
 #include "msm8992-camera-sensor-mtp.dtsi"
+#endif
 
 #include "dsi-panel-sharp-dualmipi0-wqxga-video.dtsi"
 #include "dsi-panel-sharp-dualmipi1-wqxga-video.dtsi"
+#ifndef CONFIG_VENDOR_SMARTISAN
 #include "dsi-panel-sharp-1080p-cmd.dtsi"
+#endif
 #include "dsi-panel-nt35597-wqxga-video.dtsi"
 #include "dsi-panel-nt35597-wqxga-cmd.dtsi"
 #include "dsi-panel-jdi-1080p-video.dtsi"
@@ -74,12 +78,14 @@
 	qcom,mdss-dsi-min-refresh-rate = <45>;
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &dsi_sharp_1080_cmd {
 	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
 	qcom,mdss-dsi-bl-min-level = <1>;
 	qcom,mdss-dsi-bl-max-level = <4095>;
 	qcom,cont-splash-enabled;
 };
+#endif
 
 &dsi_jdi_1080_vid {
 	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
@@ -97,6 +103,7 @@
 	qcom,qpnp-ibb-discharge-resistor = <32>;
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &pmx_hdmi_cec {
 	qcom,num-grp-pins = <1>;
 	qcom,pins = <&gp 31>;
@@ -127,7 +134,9 @@
 	pinctrl-4 = <&mdss_hdmi_hpd_suspend &mdss_hdmi_ddc_suspend
 						&mdss_hdmi_cec_suspend>;
 };
+#endif
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 / {
 	bt_qca6174 {
 		compatible = "qca,qca6174";
@@ -139,6 +148,7 @@
 		qca,bt-vdd-xtal-voltage-level = <1800000 1800000>;
 	};
 };
+#endif
 
 &blsp1_uart2 {
 	status= "ok";
@@ -220,9 +230,11 @@
 	status = "ok";
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &pmi8994_haptics {
 	status = "okay";
 };
+#endif
 
 &pm8994_gpios {
 	gpio@c200 { /* GPIO 3 */
@@ -347,6 +359,7 @@
 	};
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &slim_msm {
 	tomtom_codec {
 		qcom,cdc-micbias1-ext-cap;
@@ -364,6 +377,7 @@
 					      "cdc-vdd-spkdrv-2";
 	};
 };
+#endif
 
 &pmi8994_gpios {
 	gpio@c400 {	/* GPIO 5  OTG SWITCH EN */
@@ -386,6 +400,7 @@
 	};
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &i2c_2 {
 	synaptics@20 {
 		compatible = "synaptics,dsx";
@@ -408,7 +423,9 @@
 			 <&clock_gcc clk_gcc_blsp1_qup2_i2c_apps_clk>;
 	};
 };
+#endif
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &i2c_5 {
 	silabs4705@11 { /* SiLabs FM chip, slave id 0x11*/
 		status = "ok";
@@ -443,6 +460,7 @@
 		qcom,recharge-thresh-mv = <100>;
 	};
 };
+#endif
 
 &soc {
 	gen-vkeys {
@@ -455,6 +473,7 @@
 		qcom,key-codes = <158 139 102 217>;
 	};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	i2c@f9928000 { /* BLSP1 QUP6 */
 		status = "ok";
 		nfc-nci@e {
@@ -493,7 +512,9 @@
 			clock-names = "ref_clk";
 		};
 	};
+#endif
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	gpio_keys {
 		compatible = "gpio-keys";
 		input-name = "gpio-keys";
@@ -525,7 +546,9 @@
 			debounce-interval = <15>;
 		};
 	};
+#endif
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	sound {
 		qcom,model = "msm8994-tomtom-mtp-snd-card";
 
@@ -569,6 +592,7 @@
 		asoc-codec = <&stub_codec>, <&hdmi_audio>;
 		asoc-codec-names = "msm-stub-codec.1", "msm-hdmi-audio-codec-rx";
 	};
+#endif
 };
 
 &pm8994_vadc {
@@ -648,6 +672,19 @@
 		qcom,hw-settle-time = <2>;
 		qcom,fast-avg-setup = <0>;
 	};
+
+#ifdef CONFIG_VENDOR_SMARTISAN
+	chan@7c {
+		label = "xo_therm_buf";
+		reg = <0x7c>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <4>;
+		qcom,hw-settle-time = <2>;
+		qcom,fast-avg-setup = <0>;
+	};
+#endif
 };
 
 &pm8994_adc_tm {
@@ -715,6 +752,21 @@
 		qcom,btm-channel-number = <0x80>;
 		qcom,thermal-node;
 	};
+
+#ifdef CONFIG_VENDOR_SMARTISAN
+	chan@7c {
+		label = "xo_therm_buf";
+		reg = <0x7c>;
+		qcom,decimation = <0>;
+		qcom,pre-div-channel-scaling = <0>;
+		qcom,calibration-type = "ratiometric";
+		qcom,scale-function = <4>;
+		qcom,hw-settle-time = <2>;
+		qcom,fast-avg-setup = <0>;
+		qcom,btm-channel-number = <0x88>;
+		qcom,thermal-node;
+	};
+#endif
 };
 
 &pmi8994_vadc {
@@ -763,6 +815,7 @@
 	};
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &slim_msm {
 	tomtom_codec {
 		qcom,cdc-micbias1-ext-cap;
@@ -780,7 +833,9 @@
 					      "cdc-vdd-spkdrv-2";
 	};
 };
+#endif
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 /{
 	mtp_batterydata: qcom,battery-data {
 		qcom,batt-id-range-pct = <15>;
@@ -792,6 +847,7 @@
 	qcom,battery-data = <&mtp_batterydata>;
 	qcom,ext-sense-type;
 };
+#endif
 
 &pmi8994_charger {
 	qcom,dc-psy-type = "Wipower";
