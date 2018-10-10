@@ -11,8 +11,11 @@
  */
 
 #include "msm8994-pinctrl.dtsi"
+#ifndef CONFIG_VENDOR_SMARTISAN
 #include "msm8994-camera-sensor-mtp.dtsi"
+#endif
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 / {
 	bt_qca6174 {
 		compatible = "qca,qca6174";
@@ -24,6 +27,7 @@
 		qca,bt-vdd-xtal-voltage-level = <1800000 1800000>;
 	};
 };
+#endif
 
 &sdhc_1 {
 	vdd-supply = <&pm8994_l20>;
@@ -278,7 +282,9 @@
 #include "dsi-panel-sharp-dualmipi0-wqxga-video.dtsi"
 #include "dsi-panel-sharp-dualmipi1-wqxga-video.dtsi"
 #include "dsi-panel-jdi-1080p-video.dtsi"
+#ifndef CONFIG_VENDOR_SMARTISAN
 #include "dsi-panel-sharp-1080p-cmd.dtsi"
+#endif
 
 &mdss_mdp {
 	qcom,mdss-pref-prim-intf = "dsi";
@@ -294,6 +300,7 @@
 	qcom,pins = <&gp 10>;
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &mdss_dsi0 {
 	qcom,dsi-pref-prim-pan = <&dsi_dual_sharp_video_0>;
 	pinctrl-names = "mdss_default", "mdss_sleep";
@@ -308,13 +315,16 @@
 &mdss_dsi1 {
 	qcom,dsi-pref-prim-pan = <&dsi_dual_sharp_video_1>;
 };
+#endif
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &dsi_sharp_1080_cmd {
 	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
 	qcom,mdss-dsi-bl-min-level = <1>;
 	qcom,mdss-dsi-bl-max-level = <4095>;
 	qcom,cont-splash-enabled;
 };
+#endif
 
 &dsi_jdi_1080_vid {
 	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
@@ -349,6 +359,7 @@
 	qcom,mdss-dsi-min-refresh-rate = <30>;
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &pmx_hdmi_cec {
 	qcom,num-grp-pins = <1>;
 	qcom,pins = <&gp 31>;
@@ -379,8 +390,10 @@
 	pinctrl-4 = <&mdss_hdmi_hpd_suspend &mdss_hdmi_ddc_suspend
 						&mdss_hdmi_cec_suspend>;
 };
+#endif
 
 &soc {
+#ifndef CONFIG_VENDOR_SMARTISAN
 	i2c@f9924000 {
 		synaptics@20 {
 			compatible = "synaptics,dsx";
@@ -403,6 +416,7 @@
 				 <&clock_gcc clk_gcc_blsp1_qup2_i2c_apps_clk>;
 		};
 	};
+#endif
 
 	gen-vkeys {
 		compatible = "qcom,gen-vkeys";
@@ -414,6 +428,7 @@
 		qcom,key-codes = <158 139 102 217>;
 	};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	i2c@f9928000 { /* BLSP1 QUP6 */
 		status = "ok";
 		nfc-nci@e {
@@ -434,7 +449,9 @@
 			clock-names = "ref_clk";
 		};
 	};
+#endif
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	gpio_keys {
 		compatible = "gpio-keys";
 		input-name = "gpio-keys";
@@ -465,10 +482,12 @@
 			gpio-key,wakeup;
 			debounce-interval = <15>;
 		};
+#endif
 
 
 	};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	sound {
 		qcom,model = "msm8994-tomtom-mtp-snd-card";
 
@@ -512,6 +531,7 @@
 		asoc-codec = <&stub_codec>, <&hdmi_audio>;
 		asoc-codec-names = "msm-stub-codec.1", "msm-hdmi-audio-codec-rx";
 	};
+#endif
 };
 
 &pm8994_gpios {
@@ -641,6 +661,7 @@
 	};
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &slim_msm {
 	tomtom_codec {
 		qcom,cdc-micbias1-ext-cap;
@@ -658,6 +679,7 @@
 					      "cdc-vdd-spkdrv-2";
 	};
 };
+#endif
 
 &pmi8994_gpios {
 	gpio@c000 {	/* GPIO 1  Ultrasound PA EN */
@@ -699,9 +721,11 @@
 	 pinctrl-0 = <&uart_console_sleep>;
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &pcie0 {
 	status = "disabled";
 };
+#endif
 
 &usb3 {
 	status = "ok";
@@ -735,6 +759,7 @@
 	status = "okay";
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &i2c_5 {
 	silabs4705@11 { /* SiLabs FM chip, slave id 0x11*/
 		status = "ok";
@@ -761,6 +786,7 @@
 		interrupt-names = "silabs_fm_int", "silabs_fm_status_int";
 	};
 };
+#endif
 
 /{
 	mtp_batterydata: qcom,battery-data {
@@ -771,12 +797,16 @@
 
 &pmi8994_fg {
 	qcom,battery-data = <&mtp_batterydata>;
+#ifndef CONFIG_VENDOR_SMARTISAN
 	qcom,ext-sense-type;
+#endif
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &pmi8994_haptics {
 	status = "okay";
 };
+#endif
 
 &pmi8994_charger {
 	qcom,dc-psy-type = "Wipower";
@@ -793,12 +823,15 @@
 					<7820000 8500000 550 700 550>;
 };
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 &cnss {
 	pinctrl-names = "default";
 	pinctrl-0 = <&cnss_default &pcie0_clkreq_default>;
 };
+#endif
 
 &i2c_11 {
+#ifndef CONFIG_VENDOR_SMARTISAN
 	smb1357-charger@1c {
 		compatible = "qcom,smb1357-charger";
 		reg = <0x1c>;
@@ -806,6 +839,7 @@
 		qcom,float-voltage-mv = <4400>;
 		qcom,recharge-thresh-mv = <100>;
 	};
+#endif
 };
 
 &usb_ehci {

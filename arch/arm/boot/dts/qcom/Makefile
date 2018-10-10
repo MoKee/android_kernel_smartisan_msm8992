@@ -261,12 +261,20 @@ dtb-$(CONFIG_ARCH_MSM8994) += msm8994-v1-sim.dtb \
 	apq8094-v2.1-fluid.dtb \
 	apq8094-v2.1-dragonboard.dtb
 
+ifdef CONFIG_VENDOR_SMARTISAN
+dtb-$(CONFIG_ARCH_MSM8992) += icesky-p1-msm8992-t2.dtb \
+	icesky-p3-msm8992-t2.dtb \
+	icesky-p4-msm8992-t2.dtb \
+	icesky-p5-msm8992-t2.dtb \
+	msm8992-mtp.dtb
+else
 dtb-$(CONFIG_ARCH_MSM8992) += msm8992-sim.dtb \
 	msm8992-rumi.dtb \
 	msm8992-cdp.dtb \
 	msm8992-mtp.dtb \
 	msm8992-pmi8994-pm8004-cdp.dtb \
 	msm8992-pmi8994-pm8004-mtp.dtb
+endif
 
 DTB_NAMES := $(subst $\",,$(CONFIG_BUILD_ARM_APPENDED_DTB_IMAGE_NAMES))
 ifneq ($(DTB_NAMES),)

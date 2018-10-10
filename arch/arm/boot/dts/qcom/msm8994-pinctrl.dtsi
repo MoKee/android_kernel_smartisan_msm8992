@@ -94,6 +94,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		pmx_hdmi_cec: pmx_hdmi_cec {
 			qcom,pin-func = <1>;
 			label = "hdmi-cec-pins";
@@ -132,6 +133,7 @@
 				bias-pull-down;
 			};
 		};
+#endif
 
 		mhl_intr: mhl_intr {
 			qcom,pins = <&gp 57>;
@@ -158,6 +160,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		spi_0_active {
 			/* MOSI, MISO, CLK */
 			qcom,pins = <&gp 0>, <&gp 1>, <&gp 3>;
@@ -183,6 +186,7 @@
 			       bias-pull-down;
 		        };
 		};
+#endif
 
 		spi_cs1_active {
 			/* CS1 */
@@ -429,6 +433,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		pmx_fm_int_active {
 			qcom,pins = <&gp 9>;
 			qcom,pin-func = <0>;
@@ -500,6 +505,7 @@
 				bias-pull-down;
 			};
 		};
+#endif
 
 		pmx_i2c_6 {
 			qcom,pins = <&gp 28>, <&gp 27>; /* SDA, SCL */
@@ -1199,6 +1205,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		cnss_pmux: cnss_pmux {
 			qcom,pins = <&gp 113>;
 			qcom,num-grp-pins = <1>;
@@ -1221,7 +1228,9 @@
 				bias-pull-down;
 			};
 		};
+#endif
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		pcie0_clkreq {
 			qcom,pins = <&gp 54>;
 			qcom,num-grp-pins = <1>;
@@ -1255,6 +1264,7 @@
 				bias-pull-down;
 			};
 		};
+#endif
 
 		pcie1_clkreq {
 			qcom,pins = <&gp 36>;
@@ -1389,6 +1399,7 @@
 			};
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		tsif0_signals {
 			qcom,pins = <&gp 89>,	/* TSIF0 CLK */
 				<&gp 90>,	/* TSIF0 Enable */
@@ -1438,5 +1449,6 @@
 				bias-pull-down;		/* pull down */
 			};
 		};
+#endif
 	};
 };

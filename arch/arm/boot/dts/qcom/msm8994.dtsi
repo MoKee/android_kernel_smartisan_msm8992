@@ -35,7 +35,9 @@
 		i2c1 = &i2c_1;
 		i2c2 = &i2c_2;
 		i2c5 = &i2c_5;
+#ifndef CONFIG_VENDOR_SMARTISAN
 		spi0 = &spi_0;
+#endif
 		qup2 = &i2c_2;
 	};
 
@@ -625,6 +627,7 @@
 		clock-names = "dfab_clk", "dma_bam_pclk";
 	};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	pcie0: qcom,pcie@fc520000 {
 		compatible = "qcom,pci-msm";
 		cell-index = <0>;
@@ -702,6 +705,7 @@
 
 		max-clock-frequency-hz = <125000000>, <0>, <1011000>, <0>, <0>, <0>, <0>, <0>;
 	};
+#endif
 
 	pcie1: qcom,pcie@fc528000 {
 		compatible = "qcom,pci-msm";
@@ -1302,6 +1306,7 @@
 			status = "disabled";
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	spi_0: spi_epm: spi@f9923000 { /* BLSP1 QUP1 */
 		compatible = "qcom,spi-qup-v2";
 		#address-cells = <1>;
@@ -1329,6 +1334,7 @@
 		clocks = <&clock_gcc clk_gcc_blsp1_ahb_clk>,
 			 <&clock_gcc clk_gcc_blsp1_qup1_spi_apps_clk>;
 	};
+#endif
 
 	qcom,msm-ssc-sensors {
 		compatible = "qcom,msm-ssc-sensors";
@@ -1349,6 +1355,7 @@
 		pinctrl-0 = <&wcd_intr_default>;
 	};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	tspp: msm_tspp@f99d8000 {
 		compatible = "qcom,msm_tspp";
 		reg = <0xf99d8000 0x1000>, /* MSM_TSIF0_PHYS */
@@ -1398,6 +1405,7 @@
 			&tsif1_signals_active
 			&tsif1_sync_active>;		/* dual-tsif-mode2 */
 	};
+#endif
 
 	slim_msm: slim@fe12f000 {
 		cell-index = <1>;
@@ -3262,6 +3270,7 @@
 		};
 	};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	cnss: qcom,cnss@06300000 {
 		compatible = "qcom,cnss";
 		reg = <0x06300000 0x200000>;
@@ -3285,6 +3294,7 @@
 					<100 512 25000 200000>,  /* 200 Mbps */
 					<100 512 100000 200000>; /* 800 Mbps */
 	};
+#endif
 
 	audio_heap {
 		compatible = "qcom,msm-shared-memory";

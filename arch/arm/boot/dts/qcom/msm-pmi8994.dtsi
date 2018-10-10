@@ -544,6 +544,7 @@
 			qcom,en-ext-pfet-sc-pro;
 		};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		pmi8994_haptics: qcom,haptic@c000 {
 			status = "disabled";
 			compatible = "qcom,qpnp-haptic";
@@ -567,7 +568,9 @@
 			qcom,wave-rep-cnt = <1>;
 			qcom,wave-samp-rep-cnt = <1>;
 		};
+#endif
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 		qcom,leds@d000 {
 			compatible = "qcom,leds-qpnp";
 			reg = <0xd000 0x100>;
@@ -611,6 +614,7 @@
 				linux,default-trigger = "boot-indication";
 			};
 		};
+#endif
 
 		qcom,leds@d300 {
 			compatible = "qcom,qpnp-flash-led";

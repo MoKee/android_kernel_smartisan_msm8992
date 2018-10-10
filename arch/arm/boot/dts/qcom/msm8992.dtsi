@@ -27,7 +27,9 @@
 	};
 
 	aliases {
+#ifndef CONFIG_VENDOR_SMARTISAN
 		spi0 = &spi_0;
+#endif
 		sdhc1 = &sdhc_1; /* SDC1 eMMC slot */
 		sdhc2 = &sdhc_2; /* SDC2 SD card slot */
 		i2c6 = &i2c_6; /* I2C6 NFC qup6 device */
@@ -1045,6 +1047,7 @@
 		max-clock-frequency-hz = <125000000>, <0>, <1011000>, <0>, <0>, <0>, <0>, <0>;
 	};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	qcom,cnss {
 		compatible = "qcom,cnss";
 		wlan-bootstrap-gpio = <&msm_gpio 112 0>,
@@ -1060,6 +1063,7 @@
 		qcom,wlan-rc-num = <0>;
 		qcom,wlan-ramdump-dynamic = <0x200000>;
 	};
+#endif
 
 	ipa_hw: qcom,ipa@fd4c0000 {
 		compatible = "qcom,ipa";
@@ -1092,6 +1096,7 @@
 		qcom,ipa-loaduC;
 	};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	spi_0: spi@f9923000 {
 		compatible = "qcom,spi-qup-v2";
 		#address-cells = <1>;
@@ -1113,6 +1118,7 @@
 		qcom,ver-reg-exists;
 		qcom,master-id = <86>;
         };
+#endif
 
 	i2c_2: i2c@f9924000 { /* BLSP1 QUP2 */
 		compatible = "qcom,i2c-msm-v2";
@@ -1217,6 +1223,7 @@
 		qcom,summing-threshold = <10>;
 	};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	tspp: msm_tspp@f99d8000 {
 		compatible = "qcom,msm_tspp";
 		reg = <0xf99d8000 0x1000>, /* MSM_TSIF0_PHYS */
@@ -1266,6 +1273,7 @@
 			&tsif1_signals_active
 			&tsif1_sync_active>;		/* dual-tsif-mode2 */
 	};
+#endif
 
 	slim_msm: slim@fe12f000 {
 		cell-index = <1>;
@@ -1342,6 +1350,7 @@
 		};
 	};
 
+#ifndef CONFIG_VENDOR_SMARTISAN
 	sound {
 		compatible = "qcom,msm8994-asoc-snd";
 		qcom,model = "msm8994-tomtom-snd-card";
@@ -1429,6 +1438,7 @@
 		asoc-codec = <&stub_codec>;
 		asoc-codec-names = "msm-stub-codec.1";
 	};
+#endif
 
 	qcom,msm-adsp-loader {
 		compatible = "qcom,adsp-loader";
@@ -2599,6 +2609,13 @@
                         qcom,sensor-type =  "adc";
                         qcom,sensor-name = "quiet_therm";
                 };
+
+#ifdef CONFIG_VENDOR_SMARTISAN
+                sensor_information17: qcom,sensor-information@17 {
+                        qcom,sensor-type =  "adc";
+                        qcom,sensor-name = "xo_therm_buf";
+                };
+#endif
         };
 
 	qcom,msm-thermal {
@@ -2657,9 +2674,13 @@
 		compatible = "qcom,bcl";
 		qcom,bcl-enable;
 		qcom,bcl-framework-interface;
+#ifndef CONFIG_VENDOR_SMARTISAN
 		qcom,bcl-hotplug-list = <&CPU4 &CPU5>;
+#endif
 		qcom,bcl-freq-control-list = <&CPU4 &CPU5>;
+#ifndef CONFIG_VENDOR_SMARTISAN
 		qcom,bcl-soc-hotplug-list = <&CPU4 &CPU5>;
+#endif
 		qcom,ibat-monitor {
 			qcom,low-threshold-uamp = <3400000>;
 			qcom,high-threshold-uamp = <4200000>;
