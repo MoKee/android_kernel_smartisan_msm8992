@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -106,7 +106,10 @@
  * Invalid voltage range for the detection
  * of plug type with current source
  */
-#define WCD9XXX_CS_MEAS_INVALD_RANGE_LOW_MV 160
+
+/*change here to support the devices such as lakala*/
+//#define WCD9XXX_CS_MEAS_INVALD_RANGE_LOW_MV 160
+#define WCD9XXX_CS_MEAS_INVALD_RANGE_LOW_MV 265
 #define WCD9XXX_CS_MEAS_INVALD_RANGE_HIGH_MV 265
 
 /*
@@ -126,7 +129,7 @@
 /* RX_HPH_CNP_WG_TIME increases by 0.24ms */
 #define WCD9XXX_WG_TIME_FACTOR_US	240
 
-#define WCD9XXX_V_CS_HS_MAX 500
+#define WCD9XXX_V_CS_HS_MAX 800
 #define WCD9XXX_V_CS_NO_MIC 5
 #define WCD9XXX_MB_MEAS_DELTA_MAX_MV 80
 #define WCD9XXX_CS_MEAS_DELTA_MAX_MV 12
@@ -328,6 +331,11 @@ static bool __wcd9xxx_switch_micbias(struct wcd9xxx_mbhc *mbhc,
 			   0x04;
 		if (!override)
 			wcd9xxx_turn_onoff_override(mbhc, true);
+
+		snd_soc_update_bits(codec, WCD9XXX_A_MAD_ANA_CTRL,
+				    0x10, 0x00);
+		snd_soc_update_bits(codec, WCD9XXX_A_LDO_H_MODE_1,
+				    0x20, 0x00);
 		/* Adjust threshold if Mic Bias voltage changes */
 		if (d->micb_mv != VDDIO_MICBIAS_MV) {
 			cfilt_k_val = __wcd9xxx_resmgr_get_k_val(mbhc,
@@ -389,6 +397,11 @@ static bool __wcd9xxx_switch_micbias(struct wcd9xxx_mbhc *mbhc,
 		if ((!checkpolling || mbhc->polling_active) &&
 		    restartpolling)
 			wcd9xxx_pause_hs_polling(mbhc);
+
+			snd_soc_update_bits(codec, WCD9XXX_A_MAD_ANA_CTRL,
+					    0x10, 0x10);
+			snd_soc_update_bits(codec, WCD9XXX_A_LDO_H_MODE_1,
+					    0x20, 0x20);
 		/* Reprogram thresholds */
 		if (d->micb_mv != VDDIO_MICBIAS_MV) {
 			cfilt_k_val =
@@ -2479,7 +2492,8 @@ static void wcd9xxx_mbhc_decide_swch_plug(struct wcd9xxx_mbhc *mbhc)
 		wcd9xxx_schedule_hs_detect_plug(mbhc,
 						&mbhc->correct_plug_swch);
 	} else if (plug_type == PLUG_TYPE_HEADPHONE) {
-		wcd9xxx_report_plug(mbhc, 1, SND_JACK_HEADPHONE);
+                /*change here to fixed the bug of 0064005: headset and headphone detected*/
+		//wcd9xxx_report_plug(mbhc, 1, SND_JACK_HEADPHONE);
 		wcd9xxx_cleanup_hs_polling(mbhc);
 		wcd9xxx_schedule_hs_detect_plug(mbhc,
 						&mbhc->correct_plug_swch);
@@ -3132,6 +3146,7 @@ static void wcd9xxx_correct_swch_plug(struct work_struct *work)
 	bool correction = false;
 	bool current_source_enable;
 	bool wrk_complete = true, highhph = false;
+	int retry_headphone = 0;
 
 	pr_debug("%s: enter\n", __func__);
 
@@ -3208,17 +3223,23 @@ static void wcd9xxx_correct_swch_plug(struct work_struct *work)
 				WCD9XXX_BCL_UNLOCK(mbhc->resmgr);
 			}
 		} else if (plug_type == PLUG_TYPE_HEADPHONE) {
-			pr_debug("Good headphone detected, continue polling\n");
-			WCD9XXX_BCL_LOCK(mbhc->resmgr);
-			if (mbhc->mbhc_cfg->detect_extn_cable) {
-				if (mbhc->current_plug != plug_type)
-					wcd9xxx_report_plug(mbhc, 1,
+			/*change here to fixed the bug of 0064005: headset and headphone detected
+			 *report headphone here
+			 */
+			pr_debug("Good headphone detected, continue polling , retry_headphone = %d\n", retry_headphone);
+			retry_headphone ++;
+			if(retry_headphone == 3){
+				WCD9XXX_BCL_LOCK(mbhc->resmgr);
+				if (mbhc->mbhc_cfg->detect_extn_cable) {
+					if (mbhc->current_plug != plug_type)
+						wcd9xxx_report_plug(mbhc, 1,
 							    SND_JACK_HEADPHONE);
-			} else if (mbhc->current_plug == PLUG_TYPE_NONE) {
-				wcd9xxx_report_plug(mbhc, 1,
+				} else if (mbhc->current_plug == PLUG_TYPE_NONE) {
+					wcd9xxx_report_plug(mbhc, 1,
 						    SND_JACK_HEADPHONE);
-			}
-			WCD9XXX_BCL_UNLOCK(mbhc->resmgr);
+				}
+				WCD9XXX_BCL_UNLOCK(mbhc->resmgr);
+                        }
 		} else if (plug_type == PLUG_TYPE_HIGH_HPH) {
 			pr_debug("%s: High HPH detected, continue polling\n",
 				  __func__);
@@ -4536,64 +4557,6 @@ static void wcd9xxx_cleanup_debugfs(struct wcd9xxx_mbhc *mbhc)
 }
 #endif
 
-int wcd9xxx_mbhc_set_keycode(struct wcd9xxx_mbhc *mbhc)
-{
-	enum snd_jack_types type;
-	int i, ret, result = 0;
-	int *btn_key_code;
-
-	btn_key_code = mbhc->mbhc_cfg->key_code;
-
-	for (i = 0 ; i < 8 ; i++) {
-		if (btn_key_code[i] != 0) {
-			switch (i) {
-			case 0:
-				type = SND_JACK_BTN_0;
-				break;
-			case 1:
-				type = SND_JACK_BTN_1;
-				break;
-			case 2:
-				type = SND_JACK_BTN_2;
-				break;
-			case 3:
-				type = SND_JACK_BTN_3;
-				break;
-			case 4:
-				type = SND_JACK_BTN_4;
-				break;
-			case 5:
-				type = SND_JACK_BTN_5;
-				break;
-			case 6:
-				type = SND_JACK_BTN_6;
-				break;
-			case 7:
-				type = SND_JACK_BTN_7;
-				break;
-			default:
-				WARN_ONCE(1, "Wrong button number:%d\n", i);
-				result = -1;
-				break;
-			}
-			ret = snd_jack_set_key(mbhc->button_jack.jack,
-					       type,
-					       btn_key_code[i]);
-			if (ret) {
-				pr_err("%s: Failed to set code for %d\n",
-					__func__, btn_key_code[i]);
-				result = -1;
-			}
-			input_set_capability(
-				mbhc->button_jack.jack->input_dev,
-				EV_KEY, btn_key_code[i]);
-			pr_debug("%s: set btn%d key code:%d\n", __func__,
-				i, btn_key_code[i]);
-		}
-	}
-	return result;
-}
-
 int wcd9xxx_mbhc_start(struct wcd9xxx_mbhc *mbhc,
 		       struct wcd9xxx_mbhc_config *mbhc_cfg)
 {
@@ -4616,10 +4579,6 @@ int wcd9xxx_mbhc_start(struct wcd9xxx_mbhc *mbhc,
 
 	/* Save mbhc config */
 	mbhc->mbhc_cfg = mbhc_cfg;
-
-	/* Set btn key code */
-	if (wcd9xxx_mbhc_set_keycode(mbhc))
-		pr_err("Set btn key code error!!!\n");
 
 	/* Get HW specific mbhc registers' address */
 	wcd9xxx_get_mbhc_micbias_regs(mbhc, MBHC_PRIMARY_MIC_MB);
@@ -4664,7 +4623,7 @@ int wcd9xxx_mbhc_start(struct wcd9xxx_mbhc *mbhc,
 			schedule_delayed_work(&mbhc->mbhc_firmware_dwork,
 					     usecs_to_jiffies(FW_READ_TIMEOUT));
 		else
-			pr_debug("%s: Skipping to read mbhc fw, 0x%pK %pK\n",
+			pr_debug("%s: Skipping to read mbhc fw, 0x%p %p\n",
 				 __func__, mbhc->mbhc_fw, mbhc->mbhc_cal);
 	}
 
@@ -5062,7 +5021,7 @@ static int wcd9xxx_remeasure_z_values(struct wcd9xxx_mbhc *mbhc,
 	right = !!(r);
 
 	dev_dbg(codec->dev, "%s: Remeasuring impedance values\n", __func__);
-	dev_dbg(codec->dev, "%s: l: %pK, r: %pK, left=%d, right=%d\n", __func__,
+	dev_dbg(codec->dev, "%s: l: %p, r: %p, left=%d, right=%d\n", __func__,
 		 l, r, left, right);
 
 	/* Remeasure V2 values */

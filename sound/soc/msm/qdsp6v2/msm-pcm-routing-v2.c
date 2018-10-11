@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -33,6 +33,7 @@
 #include <sound/pcm_params.h>
 #include <sound/q6core.h>
 #include <sound/audio_cal_utils.h>
+#include <sound/msm-dts-eagle.h>
 #include <sound/audio_effects.h>
 #include <sound/hwdep.h>
 
@@ -104,20 +105,6 @@ static struct msm_pcm_route_bdai_pp_params
 
 static int msm_routing_send_device_pp_params(int port_id,  int copp_idx);
 
-static int msm_routing_get_bit_width(unsigned int format) {
-	int bit_width;
-	switch (format) {
-	case SNDRV_PCM_FORMAT_S24_LE:
-	case SNDRV_PCM_FORMAT_S24_3LE:
-		bit_width = 24;
-		break;
-	case SNDRV_PCM_FORMAT_S16_LE:
-	default:
-		bit_width = 16;
-	}
-	return bit_width;
-}
-
 static void msm_pcm_routing_cfg_pp(int port_id, int copp_idx, int topology,
 				   int channels)
 {
@@ -154,6 +141,10 @@ static void msm_pcm_routing_cfg_pp(int port_id, int copp_idx, int topology,
 					__func__, topology, port_id, rc);
 		}
 		break;
+	case ADM_CMD_COPP_OPEN_TOPOLOGY_ID_DTS_HPX:
+		pr_debug("%s: DTS_EAGLE_COPP_TOPOLOGY_ID\n", __func__);
+		msm_dts_eagle_init_post(port_id, copp_idx);
+		break;
 	default:
 		/* custom topology specific feature param handlers */
 		break;
@@ -180,6 +171,10 @@ static void msm_pcm_routing_deinit_pp(int port_id, int topology)
 			pr_debug("%s: DOLBY_ADM_COPP_TOPOLOGY_ID\n", __func__);
 			msm_dolby_dap_deinit(port_id);
 		}
+		break;
+	case ADM_CMD_COPP_OPEN_TOPOLOGY_ID_DTS_HPX:
+		pr_debug("%s: DTS_EAGLE_COPP_TOPOLOGY_ID\n", __func__);
+		msm_dts_eagle_deinit_post(port_id, topology);
 		break;
 	default:
 		/* custom topology specific feature deinit handlers */
@@ -612,7 +607,11 @@ int msm_pcm_routing_reg_phy_compr_stream(int fe_id, int perf_mode,
 			int app_type, app_type_idx, copp_idx, acdb_dev_id;
 			channels = msm_bedais[i].channel;
 
-			bit_width = msm_routing_get_bit_width(msm_bedais[i].format);
+			if (msm_bedais[i].format == SNDRV_PCM_FORMAT_S16_LE)
+				bit_width = 16;
+			else if (msm_bedais[i].format ==
+					SNDRV_PCM_FORMAT_S24_LE)
+				bit_width = 24;
 			app_type = (stream_type == SNDRV_PCM_STREAM_PLAYBACK) ?
 				   fe_dai_app_type_cfg[fe_id].app_type : 0;
 			if (app_type) {
@@ -675,9 +674,9 @@ int msm_pcm_routing_reg_phy_compr_stream(int fe_id, int perf_mode,
 }
 
 int msm_pcm_routing_channel_mixer(int fedai_id, bool perf_mode,
-				  int dspst_id, int stream_type, int be_id)
+				int dspst_id, int stream_type, int be_id)
 {
-	int copp_id = 0;
+	int copp_id;
 	int session_type = 0;
 	int path_type = 0;
 	int port_type = 0;
@@ -698,25 +697,26 @@ int msm_pcm_routing_channel_mixer(int fedai_id, bool perf_mode,
 			be_id = i;
 		}
 	}
+	pr_info("%s\n", __func__);
 	for (j = 0; j < MAX_COPPS_PER_PORT; j++) {
-		unsigned long copp =
+			unsigned long copp =
 			      session_copp_map[fedai_id][session_type][be_id];
 		if (test_bit(j, &copp)) {
 			copp_id = j;
 			break;
 		}
 	}
-	pr_debug("%s: fe_id = %d,  be_id = %d, channel = %d copp_id = %d\n",
-		 __func__, fedai_id, be_id, msm_bedais[be_id].channel,
-		 copp_id);
+	pr_debug("fe_id = %d,  be_id = %d, channel = %d copp_id = %d\n",
+				fedai_id, be_id, msm_bedais[be_id].channel,
+				copp_id);
 	programable_channel_mixer(msm_bedais[be_id].port_id, copp_id, dspst_id,
-				  session_type, &channel_mux,
-				  msm_bedais[be_id].channel);
+				session_type, &channel_mux,
+				msm_bedais[be_id].channel);
 	return 0;
 }
 
 int msm_pcm_routing_reg_phy_stream(int fedai_id, int perf_mode,
-				   int dspst_id, int stream_type)
+					int dspst_id, int stream_type)
 {
 	int i, j, session_type, path_type, port_type, topology, num_copps = 0;
 	struct route_payload payload;
@@ -756,7 +756,11 @@ int msm_pcm_routing_reg_phy_stream(int fedai_id, int perf_mode,
 			channels = msm_bedais[i].channel;
 			msm_bedais[i].compr_passthr_mode =
 				LEGACY_PCM;
-			bits_per_sample = msm_routing_get_bit_width(msm_bedais[i].format);
+			if (msm_bedais[i].format == SNDRV_PCM_FORMAT_S16_LE)
+				bits_per_sample = 16;
+			else if (msm_bedais[i].format ==
+						SNDRV_PCM_FORMAT_S24_LE)
+				bits_per_sample = 24;
 
 			app_type = (stream_type == SNDRV_PCM_STREAM_PLAYBACK) ?
 				   fe_dai_app_type_cfg[fedai_id].app_type : 0;
@@ -968,7 +972,8 @@ static void msm_pcm_routing_process_audio(u16 reg, u16 val, int set)
 						fdai->event_info.priv_data);
 				fdai->be_srate = 0; /* might not need it */
 			}
-			bits_per_sample =  msm_routing_get_bit_width(msm_bedais[reg].format);
+			if (msm_bedais[reg].format == SNDRV_PCM_FORMAT_S24_LE)
+				bits_per_sample = 24;
 
 			app_type = (session_type == SESSION_TYPE_RX) ?
 				   fe_dai_app_type_cfg[val].app_type : 0;
@@ -1561,11 +1566,6 @@ static int msm_routing_ec_ref_rx_put(struct snd_kcontrol *kcontrol,
 	int mux = ucontrol->value.enumerated.item[0];
 	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 
-	if (mux >= e->max) {
-		pr_err("%s: Invalid mux value %d\n", __func__, mux);
-		return -EINVAL;
-	}
-
 	mutex_lock(&routing_lock);
 	switch (ucontrol->value.integer.value[0]) {
 	case 0:
@@ -1616,17 +1616,19 @@ static int msm_routing_ec_ref_rx_put(struct snd_kcontrol *kcontrol,
 }
 
 static int msm_pcm_get_input_num_ch(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol)
+		       struct snd_ctl_elem_value *ucontrol)
 {
 	pr_debug("%s:\n", __func__);
 	return 0;
 }
 
 static int msm_pcm_set_input_num_ch(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol)
+		       struct snd_ctl_elem_value *ucontrol)
 {
-	pr_debug("%s: channel config = %d\n", __func__,
-		 (unsigned int)(ucontrol->value.integer.value[0]));
+	pr_debug("%s()\n", __func__);
+
+	pr_debug("channel config = %d\n",
+			(unsigned int)(ucontrol->value.integer.value[0]));
 	channel_mux.input_channel =
 			(unsigned int)(ucontrol->value.integer.value[0]);
 
@@ -1634,17 +1636,19 @@ static int msm_pcm_set_input_num_ch(struct snd_kcontrol *kcontrol,
 }
 
 static int msm_pcm_get_out_num_ch(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_value *ucontrol)
+		       struct snd_ctl_elem_value *ucontrol)
 {
 	pr_debug("%s:\n", __func__);
 	return 0;
 }
 
 static int msm_pcm_set_out_num_ch(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_value *ucontrol)
+		       struct snd_ctl_elem_value *ucontrol)
 {
-	pr_debug("%s: channel config = %d\n", __func__,
-		 (unsigned int)(ucontrol->value.integer.value[0]));
+	pr_debug("%s()\n", __func__);
+
+	pr_debug("channel config = %d\n",
+			(unsigned int)(ucontrol->value.integer.value[0]));
 	channel_mux.out_channel =
 			(unsigned int)(ucontrol->value.integer.value[0]);
 
@@ -1652,36 +1656,39 @@ static int msm_pcm_set_out_num_ch(struct snd_kcontrol *kcontrol,
 }
 
 static int msm_pcm_get_ch_mixer(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
+		       struct snd_ctl_elem_value *ucontrol)
 {
 	pr_debug("%s:\n", __func__);
 	return 0;
 }
 
 static int msm_pcm_set_left_ch_mixer(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_value *ucontrol)
+		       struct snd_ctl_elem_value *ucontrol)
 {
 	u16 out_ch = 0;
 	static u16 count;
 
-	pr_debug("%s: channel config1 = %d, channel config2 = %d\n",
-		  __func__,
-		 (unsigned int)(ucontrol->value.integer.value[0]),
+	pr_debug("%s()\n", __func__);
+	pr_debug("channel config1 = %d\n",
+		 (unsigned int)(ucontrol->value.integer.value[0]));
+	pr_debug("channel config2 = %d\n",
 		 (unsigned int)(ucontrol->value.integer.value[1]));
-	pr_debug("%s: channel config3 = %d, channel config4 = %d\n",
-		  __func__,
-		 (unsigned int)(ucontrol->value.integer.value[2]),
-		 (unsigned int)(ucontrol->value.integer.value[3]));
+	pr_debug("channel config3 = %d\n",
+		 (unsigned int)(ucontrol->value.integer.value[2]));
+	pr_debug("channel config4 = %d\n",
+		  (unsigned int)(ucontrol->value.integer.value[3]));
 
 	out_ch = ((struct soc_multi_mixer_control *)
 			kcontrol->private_value)->shift;
 
+	pr_debug("%s: Out %d\n", __func__, out_ch);
 	channel_mux.channel_config[out_ch][count] =
 		(unsigned int)(ucontrol->value.integer.value[count]);
-	pr_debug("%s: channel_config[%d][%d] = %d\n",
-		 __func__, out_ch, count,
-		 channel_mux.channel_config[out_ch][count]);
+	pr_err("channel_config[%d][%d] = %d\n",
+		out_ch, count,
+		channel_mux.channel_config[out_ch][count]);
 	count++;
+	pr_debug("count %d\n ", count);
 
 	if (count > (channel_mux.input_channel - 1))
 		count = 0;
@@ -1777,10 +1784,6 @@ static int msm_routing_ext_ec_put(struct snd_kcontrol *kcontrol,
 	pr_debug("%s: msm_route_ec_ref_rx = %d value = %ld\n",
 		 __func__, msm_route_ext_ec_ref,
 		 ucontrol->value.integer.value[0]);
-	if (mux >= e->max) {
-		pr_err("%s: Invalid mux value %d\n", __func__, mux);
-		return -EINVAL;
-	}
 
 	mutex_lock(&routing_lock);
 	switch (ucontrol->value.integer.value[0]) {
@@ -3642,6 +3645,9 @@ static const struct snd_kcontrol_new primary_mi2s_rx_port_mixer_controls[] = {
 	SOC_SINGLE_EXT("PRI_MI2S_TX", MSM_BACKEND_DAI_PRI_MI2S_RX,
 	MSM_BACKEND_DAI_PRI_MI2S_TX, 1, 0, msm_routing_get_port_mixer,
 	msm_routing_put_port_mixer),
+	SOC_SINGLE_EXT("SLIM_0_TX", MSM_BACKEND_DAI_PRI_MI2S_RX,
+	MSM_BACKEND_DAI_SLIMBUS_0_TX, 1, 0, msm_routing_get_port_mixer,
+	msm_routing_put_port_mixer),
 };
 
 static const struct snd_kcontrol_new quat_mi2s_rx_port_mixer_controls[] = {
@@ -5404,6 +5410,7 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"MI2S_RX Port Mixer", "MI2S_TX", "MI2S_TX"},
 	{"MI2S_RX", NULL, "MI2S_RX Port Mixer"},
 
+	{"PRI_MI2S_RX Port Mixer", "SLIM_0_TX", "SLIMBUS_0_TX"},
 	{"PRI_MI2S_RX Port Mixer", "PRI_MI2S_TX", "PRI_MI2S_TX"},
 	{"PRI_MI2S_RX Port Mixer", "SEC_MI2S_TX", "SEC_MI2S_TX"},
 	{"PRI_MI2S_RX Port Mixer", "QUAT_MI2S_TX", "QUAT_MI2S_TX"},
@@ -5899,6 +5906,8 @@ static int msm_routing_probe(struct snd_soc_platform *platform)
 			return -ENOMEM;
 		snd_ctl_add(platform->card->snd_card, kctl);
 	}
+
+	msm_dts_eagle_add_controls(platform);
 	return 0;
 }
 
