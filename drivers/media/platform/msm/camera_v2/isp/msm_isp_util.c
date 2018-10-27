@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,7 +21,6 @@
 #include "msm_camera_io_util.h"
 
 #define MAX_ISP_V4l2_EVENTS 100
-#define MAX_ISP_REG_LIST 100
 static DEFINE_MUTEX(bandwidth_mgr_mutex);
 static struct msm_isp_bandwidth_mgr isp_bandwidth_mgr;
 
@@ -593,7 +592,6 @@ int msm_isp_cfg_input(struct vfe_device *vfe_dev, void *arg)
 static int msm_isp_proc_cmd_list_unlocked(struct vfe_device *vfe_dev, void *arg)
 {
 	int rc = 0;
-	uint32_t count = 0;
 	struct msm_vfe_cfg_cmd_list *proc_cmd =
 		(struct msm_vfe_cfg_cmd_list *)arg;
 	struct msm_vfe_cfg_cmd_list cmd, cmd_next;
@@ -615,12 +613,6 @@ static int msm_isp_proc_cmd_list_unlocked(struct vfe_device *vfe_dev, void *arg)
 			pr_err("%s:%d failed: next size %u != expected %zu\n",
 				__func__, __LINE__, cmd.next_size,
 				sizeof(struct msm_vfe_cfg_cmd_list));
-			break;
-		}
-		if (++count >= MAX_ISP_REG_LIST) {
-			pr_err("%s:%d Error exceeding the max register count:%u\n",
-				__func__, __LINE__, count);
-			rc = -EINVAL;
 			break;
 		}
 		if (copy_from_user(&cmd_next, (void __user *)cmd.next,
@@ -669,7 +661,6 @@ static void msm_isp_compat_to_proc_cmd(struct msm_vfe_cfg_cmd2 *proc_cmd,
 static int msm_isp_proc_cmd_list_compat(struct vfe_device *vfe_dev, void *arg)
 {
 	int rc = 0;
-	uint32_t count = 0;
 	struct msm_vfe_cfg_cmd_list_32 *proc_cmd =
 		(struct msm_vfe_cfg_cmd_list_32 *)arg;
 	struct msm_vfe_cfg_cmd_list_32 cmd, cmd_next;
@@ -692,12 +683,6 @@ static int msm_isp_proc_cmd_list_compat(struct vfe_device *vfe_dev, void *arg)
 			pr_err("%s:%d failed: next size %u != expected %zu\n",
 				__func__, __LINE__, cmd.next_size,
 				sizeof(struct msm_vfe_cfg_cmd_list));
-			break;
-		}
-		if (++count >= MAX_ISP_REG_LIST) {
-			pr_err("%s:%d Error exceeding the max register count:%u\n",
-				__func__, __LINE__, count);
-			rc = -EINVAL;
 			break;
 		}
 		if (copy_from_user(&cmd_next, compat_ptr(cmd.next),
@@ -735,7 +720,6 @@ static long msm_isp_ioctl_unlocked(struct v4l2_subdev *sd,
 	unsigned int cmd, void *arg)
 {
 	long rc = 0;
-	long rc2 = 0;
 	struct vfe_device *vfe_dev = v4l2_get_subdevdata(sd);
 
 	if (!vfe_dev || !vfe_dev->vfe_base) {
@@ -802,17 +786,13 @@ static long msm_isp_ioctl_unlocked(struct v4l2_subdev *sd,
 	case VIDIOC_MSM_ISP_AXI_RESET:
 		mutex_lock(&vfe_dev->core_mutex);
 		rc = msm_isp_stats_reset(vfe_dev);
-		rc2 |= msm_isp_axi_reset(vfe_dev, arg);
-		if (!rc && rc2)
-			rc = rc2;
+		rc |= msm_isp_axi_reset(vfe_dev, arg);
 		mutex_unlock(&vfe_dev->core_mutex);
 		break;
 	case VIDIOC_MSM_ISP_AXI_RESTART:
 		mutex_lock(&vfe_dev->core_mutex);
 		rc = msm_isp_stats_restart(vfe_dev);
-		rc2 |= msm_isp_axi_restart(vfe_dev, arg);
-		if (!rc && rc2)
-			rc = rc2;
+		rc |= msm_isp_axi_restart(vfe_dev, arg);
 		mutex_unlock(&vfe_dev->core_mutex);
 		break;
 	case VIDIOC_MSM_ISP_INPUT_CFG:
@@ -961,8 +941,7 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 			(UINT_MAX - reg_cfg_cmd->u.rw_info.len)) ||
 			((reg_cfg_cmd->u.rw_info.reg_offset +
 			reg_cfg_cmd->u.rw_info.len) >
-			resource_size(vfe_dev->vfe_mem)) ||
-			(reg_cfg_cmd->u.rw_info.reg_offset & 0x3)) {
+			resource_size(vfe_dev->vfe_mem))) {
 			pr_err("%s:%d reg_offset %d len %d res %d\n",
 				__func__, __LINE__,
 				reg_cfg_cmd->u.rw_info.reg_offset,
@@ -990,8 +969,7 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 	case VFE_READ_DMI_16BIT:
 	case VFE_READ_DMI_32BIT:
 	case VFE_READ_DMI_64BIT: {
-		if (reg_cfg_cmd->cmd_type == VFE_WRITE_DMI_64BIT ||
-			reg_cfg_cmd->cmd_type == VFE_READ_DMI_64BIT) {
+		if (reg_cfg_cmd->cmd_type == VFE_WRITE_DMI_64BIT) {
 			if ((reg_cfg_cmd->u.dmi_info.hi_tbl_offset <=
 				reg_cfg_cmd->u.dmi_info.lo_tbl_offset) ||
 				(reg_cfg_cmd->u.dmi_info.hi_tbl_offset -
@@ -1063,8 +1041,7 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 			reg_cfg_cmd->u.mask_info.reg_offset) ||
 			(resource_size(vfe_dev->vfe_mem) <
 			reg_cfg_cmd->u.mask_info.reg_offset +
-			sizeof(temp)) ||
-			(reg_cfg_cmd->u.mask_info.reg_offset & 0x3)) {
+			sizeof(temp))) {
 			pr_err("%s: VFE_CFG_MASK: Invalid length\n", __func__);
 			return -EINVAL;
 		}
@@ -1579,6 +1556,8 @@ void msm_isp_update_error_frame_count(struct vfe_device *vfe_dev)
 {
 	struct msm_vfe_error_info *error_info = &vfe_dev->error_info;
 	error_info->info_dump_frame_count++;
+	if (error_info->info_dump_frame_count == 0)
+		error_info->info_dump_frame_count++;
 }
 
 
@@ -1595,7 +1574,7 @@ void msm_isp_process_iommu_page_fault(struct vfe_device *vfe_dev)
 
 	msm_isp_axi_halt(vfe_dev, &halt_cmd);
 
-	for (i = 0; i < VFE_AXI_SRC_MAX; i++)
+	for (i = 0; i < MAX_NUM_STREAM; i++)
 		vfe_dev->axi_data.stream_info[i].state = INACTIVE;
 
 	pr_err("%s:%d] vfe_dev %p id %d\n", __func__,
@@ -1689,7 +1668,6 @@ static void msm_isp_process_overflow_irq(
 		*irq_status0 = 0;
 		*irq_status1 = 0;
 
-		memset(&error_event, 0, sizeof(error_event));
 		error_event.frame_id =
 			vfe_dev->axi_data.src_info[VFE_PIX_0].frame_id;
 		error_event.u.error_info.err_type = ISP_ERROR_BUS_OVERFLOW;
@@ -1705,7 +1683,8 @@ void msm_isp_reset_burst_count_and_frame_drop(
 		stream_info->stream_type != BURST_STREAM) {
 		return;
 	}
-	if (stream_info->num_burst_capture != 0) {
+	if (stream_info->stream_type == BURST_STREAM &&
+		stream_info->num_burst_capture != 0) {
 		framedrop_period = msm_isp_get_framedrop_period(
 		   stream_info->frame_skip_pattern);
 		stream_info->burst_frame_count =
