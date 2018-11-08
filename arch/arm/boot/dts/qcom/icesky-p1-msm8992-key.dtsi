@@ -13,9 +13,10 @@
 /* Overlay the msm8994-mtp.dtsi */
 &soc {
 	gpio_keys {
-                compatible = "gpio-keys";
+		compatible = "gpio-keys";
 		input-name = "gpio-keys";
 
+		/* Left up */
 		vol_up_r {
 			label = "volume_up_left";
 			gpios = <&pm8994_gpios 3 0x1>;
@@ -25,7 +26,8 @@
 			debounce-interval = <15>;
 		};
 
-                vol_dn_r {
+		/* Right down */
+		vol_dn_r {
 			label = "volume_down_left";
 			gpios = <&pm8994_gpios 1 0x1>;
 			linux,input-type = <1>;
@@ -34,6 +36,7 @@
 			debounce-interval = <15>;
 		};
 
+		/* Right up */
 		vol_up_l {
 			label = "volume_up_right";
 			gpios = <&pm8994_gpios 4 0x1>;
@@ -43,6 +46,7 @@
 			debounce-interval = <15>;
 		};
 
+		/* Nav right */
 		key_back {
 			label = "key_back";
 			gpios = <&pm8994_gpios 2 0x1>;
@@ -52,6 +56,7 @@
 			debounce-interval = <15>;
 		};
 
+		/* Nav left */
 		key_menu {
 			label = "key_menu";
 			gpios = <&pm8994_gpios 5 0x1>;
@@ -86,13 +91,17 @@
 	qcom,pm8994@0 {
 		qcom,power-on@800 {
 			qcom,s3-debounce = <8>;
+
+			/* Left down */
 			qcom,pon_2 {
 				linux,code = <2>;
 			};
-			qcom,pon_1 {
-                                qcom,support-reset = <0>;
-                        };
 
+			/* Nav middle */
+			qcom,pon_1 {
+				qcom,support-reset = <0>;
+				linux,code = <116>;
+			};
 		};
 	};
 };
