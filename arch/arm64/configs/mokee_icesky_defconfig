@@ -1476,8 +1476,8 @@ CONFIG_BCMDHD=y
 # CONFIG_BCMDHD_SDIO is not set
 CONFIG_BCMDHD_PCIE=y
 # CONFIG_BCM4354 is not set
-CONFIG_BCMDHD_FW_PATH="/system/etc/firmware/bcm43455_sta.bin"
-CONFIG_BCMDHD_NVRAM_PATH="/system/etc/firmware/bcm43455_nvram.txt"
+CONFIG_BCMDHD_FW_PATH="/vendor/firmware/bcm43455_sta.bin"
+CONFIG_BCMDHD_NVRAM_PATH="/vendor/firmware/bcm43455_nvram.txt"
 CONFIG_DHD_USE_STATIC_BUF=y
 CONFIG_DHD_USE_SCHED_SCAN=y
 
