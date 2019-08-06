@@ -84,16 +84,6 @@ static u32 mdss_fb_pseudo_palette[16] = {
 	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };
 
-#ifdef CONFIG_VENDOR_SMARTISAN
-static u32 gamma_luminance[] = {
-	0,    30,   64,   104,  148,  197,  247,  300,
-	353,  455,  558,  660,  763,  945,  1052, 1195,
-	1344, 1488, 1586, 1682, 1779, 1899, 2020, 2141,
-	2302, 2464, 2628, 2861, 3100, 3340, 3610, 3888,
-	4095
-};
-#endif
-
 static struct msm_mdp_interface *mdp_instance;
 
 static int mdss_fb_register(struct msm_fb_data_type *mfd);
@@ -260,9 +250,6 @@ static void mdss_fb_set_bl_brightness(struct led_classdev *led_cdev,
 {
 	struct msm_fb_data_type *mfd = dev_get_drvdata(led_cdev->dev->parent);
 	int bl_lvl;
-#ifdef CONFIG_VENDOR_SMARTISAN
-	int temp;
-#endif
 
 	if (mfd->boot_notification_led) {
 		led_trigger_event(mfd->boot_notification_led, 0);
@@ -272,11 +259,6 @@ static void mdss_fb_set_bl_brightness(struct led_classdev *led_cdev,
 	if (value > mfd->panel_info->brightness_max)
 		value = mfd->panel_info->brightness_max;
 
-#ifdef CONFIG_VENDOR_SMARTISAN
-	if ((value > 0) && (value < 8))
-		value = 8;
-#endif
-
 	/* This maps android backlight level 0 to 255 into
 	   driver backlight level 0 to bl_max with rounding */
 	MDSS_BRIGHT_TO_BL(bl_lvl, value, mfd->panel_info->bl_max,
@@ -284,14 +266,6 @@ static void mdss_fb_set_bl_brightness(struct led_classdev *led_cdev,
 
 	if (!bl_lvl && value)
 		bl_lvl = 1;
-
-#ifdef CONFIG_VENDOR_SMARTISAN
-	temp = value / 8;
-	if (value < 255)
-		bl_lvl = gamma_luminance[temp] + (gamma_luminance[temp+1] - gamma_luminance[temp]) * (value % 8) / 8;
-	else
-		bl_lvl = 4095;
-#endif
 
 	if (!IS_CALIB_MODE_BL(mfd) && (!mfd->ext_bl_ctrl || !value ||
 							!mfd->bl_level)) {
